@@ -5,12 +5,19 @@ using UnityEngine;
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class WaterBody : MonoBehaviour
 {
-    public int waterLength = 200;
-    public float waveMultipler = 5.0f;
-    public float waveHeightScale = 1.0f;
-    public float waveOffset = 1.0f;
+    public ComputeShader computeShader;
+    public int waterLength = 128;
 
-    public float textureScale = 20.0f;
+    public float waveSpeed = 1.0f;
+    public float waveHeight = 1.0f;
+    public float waveFrequency = 20.0f;
+
+    
+    int hComputeKernal;
+    private RenderTexture RT;
+
+    [HideInInspector]
+    public float waveMultipler = 5.0f, waveHeightScale = 1.0f, waveOffset = 1.0f;
 
     private Vector3[] vertices;
     private Mesh mesh;
@@ -24,15 +31,24 @@ public class WaterBody : MonoBehaviour
         renderer = GetComponent<Renderer>();
 
         verts = new List<Vector3>();
+
+        //! Create Render texture for computeShader shader output!
+        RT = new RenderTexture(waterLength, waterLength, 24);
+        RT.enableRandomWrite = true;
+        RT.format = RenderTextureFormat.ARGBFloat;
+        RT.Create();
+
+        //! compute shader related variable linking!
+        int hComputeKernal = computeShader.FindKernel("CSWater");
     }
 
     private Texture2D GenerateTexture()
     {
         Texture2D texture = new Texture2D(waterLength, waterLength);
 
-        for(int x = 0; x < waterLength; x++)
+        for (int x = 0; x < waterLength; x++)
         {
-            for(int y = 0; y < waterLength; y++)
+            for (int y = 0; y < waterLength; y++)
             {
                 Color color = CalculateColor(x, y);
                 texture.SetPixel(x, y, color);
@@ -43,10 +59,23 @@ public class WaterBody : MonoBehaviour
         return texture;
     }
 
+    private void UpdateTextureFromCompute()
+    {
+        computeShader.SetInt("waterLength", waterLength);
+        computeShader.SetFloat("waveFrequency", waveFrequency);
+        computeShader.SetFloat("waveSpeed", Time.time * waveSpeed);
+        computeShader.SetTexture(hComputeKernal, "Result", RT);
+
+        computeShader.Dispatch(hComputeKernal, waterLength / 8, waterLength / 8, 1);
+
+        renderer.material.SetFloat("_WaveHeight", waveHeight);
+        renderer.material.SetTexture("_NoiseTex", RT);
+    }
+
     private Color CalculateColor(int x, int y)
     {
-        float xCoord = (float)x / waterLength * textureScale + Time.time;
-        float yCoord = (float)y / waterLength * textureScale + Time.time;
+        float xCoord = (float)x / waterLength * waveFrequency + Time.time;
+        float yCoord = (float)y / waterLength * waveFrequency + Time.time;
 
         float sample = Mathf.PerlinNoise(xCoord, yCoord);
         return new Color(sample, sample, sample);
@@ -70,8 +99,8 @@ public class WaterBody : MonoBehaviour
 
     private float CalculateHeight(int x, int y)
     {
-        float xCoord = (float)x / waterLength * textureScale + Time.time * waveOffset;
-        float yCoord = (float)y / waterLength * textureScale + Time.time * waveOffset;
+        float xCoord = (float)x / waterLength * waveFrequency + Time.time * waveOffset;
+        float yCoord = (float)y / waterLength * waveFrequency + Time.time * waveOffset;
 
         float sample = Mathf.PerlinNoise(xCoord, yCoord);
         return sample;
@@ -134,7 +163,7 @@ public class WaterBody : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        renderer.material.SetTexture("_NoiseTex", GenerateTexture());
+        UpdateTextureFromCompute();
         //UpdateMesh();
     }
 }

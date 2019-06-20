@@ -7,7 +7,7 @@
 		_NoiseTex("Noise (RGB)", 2D) = "white" {}
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
         _Metallic ("Metallic", Range(0,1)) = 0.0
-		_WaveIntensity("Wave Intensity", Range(1,100)) = 1.0
+		_WaveHeight("Wave Intensity", Range(1,100)) = 1.0
     }
     SubShader
     {
@@ -33,7 +33,7 @@
         half _Metallic;
         fixed4 _Color;
 
-		float _WaveIntensity;
+		float _WaveHeight;
 
         // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
         // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
@@ -45,8 +45,8 @@
 		void vert(inout appdata_full v)
 		{
 			float3 dispColor = tex2Dlod(_NoiseTex, float4(v.texcoord.xy, 0, 0));
-			float d = dispColor.r;
-			v.vertex.xyz += v.normal * d * _WaveIntensity;
+			float d = (dispColor.r + dispColor.g + dispColor.b) / 3.0f;
+			v.vertex.xyz += v.normal * d * _WaveHeight;
 		}
 
         void surf (Input IN, inout SurfaceOutputStandard o)

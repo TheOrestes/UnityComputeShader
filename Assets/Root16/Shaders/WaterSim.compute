@@ -1,0 +1,27 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSWater
+
+#include "NoiseInclude.compute"
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+int	waterLength;
+float waveFrequency;
+float waveSpeed;
+RWTexture2D<float4> Result;
+
+
+[numthreads(8,8,1)]
+void CSWater (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+
+	float x = (float)id.x  + waveSpeed;
+	float y = (float)id.y  + waveSpeed;
+
+	//x *= waveFrequency;
+	//y *= waveFrequency;
+
+	Result[id.xy] = snoise(float3(x, y, 1.0f));	
+	//Result[id.xy] = float4(x, y, 1.0f, 1.0f);
+}

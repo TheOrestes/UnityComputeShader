@@ -234,11 +234,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cbd258a1402107944b3676f8fd97b898, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  waterLength: 300
+  computeShader: {fileID: 7200000, guid: 525c74a88cdbcc5439b1a86c98972e1e, type: 3}
+  waterLength: 256
+  waveSpeed: 1
+  waveHeight: 1
+  waveFrequency: 200
   waveMultipler: 8
   waveHeightScale: 1
   waveOffset: 1
-  textureScale: 100
 --- !u!23 &609521511
 MeshRenderer:
   m_ObjectHideFlags: 0
